@@ -1,0 +1,1 @@
+Buzdolabındaki ürünlerin fotoğraflarını çekerek son kullanma tarihlerine göre bir "tüketim önceliği listesi" ve bu malzemelerle yapılabilecek tarifler çıkaran bir NLP asistanı tasarladım. Evsel gıda israfını önlerken aynı zamanda bütçe yönetimine katkı sağlar.Olabildiğince israfı azaltmayı sağladık.
