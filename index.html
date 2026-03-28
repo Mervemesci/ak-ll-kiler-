@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreshGuard — Son Kullanma Tarihi Hatırlatıcı</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fff7ed;
+      --border: #fdba74;
+      --orange: #f97316;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --text-faint: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 { font-family: 'Syne', sans-serif; margin-bottom: 10px; }
+    p.subtitle { color: var(--text-dim); margin-top: 0; margin-bottom: 24px; }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: #fff7ed;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--orange);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: #ffedd5;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1.7fr 1fr 1fr auto;
+      margin-bottom: 16px;
+    }
+
+    input, select, button {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff8f1;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.93rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .btn-add { background: var(--green); color: #071206; }
+    .btn-clear { background: #ffedd5; color: #9a3412; border: 1px solid #fbbf24; }
+    .btn-delete { background: var(--red); color: #0c0808; }
+    .btn-done { background: var(--yellow); color: #231a00; }
+    .btn-recipe { background: var(--orange); color: white; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #223022; }
+    th { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .status { font-weight: 700; padding: 3px 8px; border-radius: 999px; display: inline-block; font-size: 0.76rem; }
+    .status-ok { background: rgba(74,214,128,0.2); color: var(--green); }
+    .status-warning { background: rgba(250,204,21,0.2); color: var(--yellow); }
+    .status-expired { background: rgba(248,113,113,0.2); color: var(--red); }
+
+    .alert { background: var(--red); color: #fff; border-radius: 8px; padding: 10px; margin-bottom: 16px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #fff7ed;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--orange); }
+    .stat-label { font-size: 0.9rem; color: var(--text-dim); }
+
+    @media (max-width: 820px) {
+      .form-row { grid-template-columns: 1fr; }
+      table, th, td { font-size: 0.84rem; }
+      .tabs { flex-wrap: wrap; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="card" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px;">
+      <div style="flex:1; min-width:220px;">
+        <h1 style="margin: 0; display:flex; align-items:center; gap:8px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+            <path d="M3 7V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V7M3 7V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7M3 7H21M12 11V15M9 13H15" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          FreshGuard
+        </h1>
+        <p class="subtitle">Akıllı Kiler & Tarif Asistanı</p>
+        <p style="color: #ef4444; margin-top: 8px; font-family: 'Syne', sans-serif; font-style: italic; font-weight: 700; background: rgba(248,113,113,0.12); display: inline-block; padding: 6px 10px; border-radius: 8px; line-height: 1.3; overflow: visible;">Her damla su, her lokma ekmek; geleceğin umududur.</p>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="dashboard">Ana Sayfa</button>
+      <button class="tab-btn" data-tab="add-product">Ürün Ekle</button>
+      <button class="tab-btn" data-tab="inventory">Kilerim</button>
+      <button class="tab-btn" data-tab="recipes">Akıllı Tarif</button>
+    </div>
+
+    <!-- Ana Sayfa (Dashboard) -->
+    <div id="dashboard" class="tab-content active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="totalItems">0</div>
+          <div class="stat-label">Toplam Ürün</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="expiringSoon">0</div>
+          <div class="stat-label">Yakında Biter</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="expired">0</div>
+          <div class="stat-label">Süresi Geçmiş</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="recipesCount">0</div>
+          <div class="stat-label">Mümkün Tarif</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Hızlı Aksiyon</h3>
+        <button class="btn-recipe" id="quickRecipeBtn">Hemen Tarif Bul!</button>
+      </div>
+
+      <div id="alertArea"></div>
+    </div>
+
+    <!-- Ürün Ekle -->
+    <div id="add-product" class="tab-content">
+      <div class="card">
+        <h2>Yeni Ürün Ekle</h2>
+        <p>Marketten geldiğinde ürünleri buraya gir.</p>
+
+        <div class="form-row">
+          <input id="itemName" type="text" placeholder="Ürün adı (örnek: Süt)" aria-label="Ürün adı" />
+          <input id="itemAmount" type="text" placeholder="Miktar (örnek: 1L / 3 adet)" />
+          <input id="expiryDate" type="date" aria-label="Son kullanma tarihi" />
+          <button id="addItem" class="btn-add">Ekle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kilerim (Tüm Liste) -->
+    <div id="inventory" class="tab-content">
+      <div class="card">
+        <h2>Kilerim</h2>
+        <p>Dolaptaki her şey burada.</p>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <select id="filterSelect" aria-label="Filtre">
+            <option value="all">Hepsi</option>
+            <option value="today">Bugün</option>
+            <option value="week">1 hafta</option>
+            <option value="expired">Süresi Geçmiş</option>
+          </select>
+          <button id="resetData" class="btn-clear">Temizle</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table id="itemsTable">
+            <thead>
+              <tr><th>Ürün</th><th>Miktar</th><th>Son Kullanma</th><th>Kalan</th><th>Durum</th><th>İşlem</th></tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Akıllı Tarif -->
+    <div id="recipes" class="tab-content">
+      <div class="card">
+        <h2>Akıllı Tarif</h2>
+        <p>Elinizdeki ürünlere göre AI önerileri.</p>
+        <div id="recipesArea" style="color: var(--text);"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'freshguard-items-v1';
+    const state = { items: [] };
+
+    const SAMPLE_ITEMS = [
+      { name: 'Elma', amount: '5 adet', expiry: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0,10) },
+      { name: 'Havuç', amount: '1 kg', expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0,10) },
+      { name: 'Süt', amount: '1L', expiry: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0,10) },
+      { name: 'Peynir', amount: '250 g', expiry: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().slice(0,10) },
+      { name: 'Domates', amount: '4 adet', expiry: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0,10) }
+    ];
+
+    function parseStoredItems() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveItems() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items)); }
+
+    function getDateDiffDays(dateStr) {
+      const target = new Date(dateStr + 'T23:59:59');
+      const now = new Date();
+      const diffMs = target - now;
+      return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function statusBadge(daysLeft) {
+      if (daysLeft < 0) return '<span class="status status-expired">Süresi Geçti</span>';
+      if (daysLeft <= 3) return '<span class="status status-warning">Yakında (' + daysLeft + 'g)</span>';
+      return '<span class="status status-ok">Güvende (' + daysLeft + 'g)</span>';
+    }
+
+    const RECIPE_DB = [
+      { name: 'Sebzeli Omlet', ingredients: ['yumurta', 'peynir', 'domates'], description: 'Sebzeli omlet için doğranmış malzemeleri çırpılmış yumurtayla pişirin.', image: 'https://source.unsplash.com/featured/100x100/?omelette' },
+      { name: 'Meyve Salatası', ingredients: ['elma', 'muz', 'portakal'], description: 'Tüm meyveleri doğrayıp karıştırın, limon suyu ekleyin.', image: 'https://source.unsplash.com/featured/100x100/?fruit-salad' },
+      { name: 'Havuçlu Peynirli Sandviç', ingredients: ['havuç', 'peynir', 'ekmek'], description: 'Rendelenmiş havuç ve peynirle sandviç hazırlayın.', image: 'https://source.unsplash.com/featured/100x100/?sandwich' },
+      { name: 'Domatesli Salata', ingredients: ['domates', 'salatalık', 'zeytinyağı'], description: 'Sebzeleri doğrayıp zeytinyağı, tuz ve limon ile karıştırın.', image: 'https://source.unsplash.com/featured/100x100/?salad' },
+      { name: 'Sütlü Smoothie', ingredients: ['süt', 'muz', 'bal'], description: 'Meyve ve sütü blenderda karıştırın.', image: 'https://source.unsplash.com/featured/100x100/?smoothie' }
+    ];
+
+    function getProductImage(name) {
+      const lower = name.toLowerCase();
+      if (lower.includes('elma') || lower.includes('armut')) return 'https://source.unsplash.com/featured/50x50/?apple';
+      if (lower.includes('havuç')) return 'https://source.unsplash.com/featured/50x50/?carrot';
+      if (lower.includes('domates')) return 'https://source.unsplash.com/featured/50x50/?tomato';
+      if (lower.includes('salatalık')) return 'https://source.unsplash.com/featured/50x50/?cucumber';
+      if (lower.includes('peynir')) return 'https://source.unsplash.com/featured/50x50/?cheese';
+      if (lower.includes('süt') || lower.includes('yoğurt')) return 'https://source.unsplash.com/featured/50x50/?milk';
+      if (lower.includes('ekmek')) return 'https://source.unsplash.com/featured/50x50/?bread';
+      if (lower.includes('yumurta')) return 'https://source.unsplash.com/featured/50x50/?egg';
+      if (lower.includes('muz')) return 'https://source.unsplash.com/featured/50x50/?banana';
+      if (lower.includes('portakal')) return 'https://source.unsplash.com/featured/50x50/?orange';
+      return 'https://source.unsplash.com/featured/50x50/?food';
+    }
+
+    function renderRecipes() {
+      const available = state.items.map(item => item.name.toLowerCase());
+      const recipes = RECIPE_DB
+        .map(recipe => {
+          const has = recipe.ingredients.filter(ing => available.some(a => a.includes(ing)));
+          const missing = recipe.ingredients.filter(ing => !available.some(a => a.includes(ing)));
+          return { ...recipe, hasCount: has.length, missing };
+        })
+        .filter(r => r.hasCount > 0)
+        .sort((a,b) => b.hasCount - a.hasCount);
+
+      const area = document.getElementById('recipesArea');
+      if (!recipes.length) {
+        area.innerHTML = '<p style="color: var(--text-dim);">Yeterli malzeme yok, lütfen ürün ekleyin.</p>';
+        return;
+      }
+
+      area.innerHTML = recipes.map(r => {
+        const missingText = r.missing.length ? `<p style="margin:4px 0;color:var(--text-faint);">Eksik: ${r.missing.join(', ')}</p>` : '<p style="margin:4px 0;color:var(--green);">Elinizdeki malzemeler yeterli!</p>';
+        return `<div style="border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px; background:#fffaf0; color:var(--text); display:flex; align-items:flex-start; gap:10px;">
+          <img src="${r.image}" alt="${r.name}" style="width:80px; height:80px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+          <div>
+            <strong>${r.name}</strong> (${r.hasCount}/${r.ingredients.length})<br/>
+            <small>${r.description}</small>
+            ${missingText}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderStats() {
+      const total = state.items.length;
+      const expiringSoon = state.items.filter(it => getDateDiffDays(it.expiry) <= 3 && getDateDiffDays(it.expiry) >= 0).length;
+      const expired = state.items.filter(it => getDateDiffDays(it.expiry) < 0).length;
+      const available = state.items.map(item => item.name.toLowerCase());
+      const recipesCount = RECIPE_DB.filter(recipe => recipe.ingredients.some(ing => available.some(a => a.includes(ing)))).length;
+
+      document.getElementById('totalItems').textContent = total;
+      document.getElementById('expiringSoon').textContent = expiringSoon;
+      document.getElementById('expired').textContent = expired;
+      document.getElementById('recipesCount').textContent = recipesCount;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+
+      if (tabName === 'dashboard') {
+        renderStats();
+        renderAlert();
+      }
+      if (tabName === 'inventory') {
+        renderItems();
+      }
+      if (tabName === 'recipes') {
+        renderRecipes();
+      }
+    }
+
+    function renderAlert() {
+      const soon = state.items.filter(it => getDateDiffDays(it.expiry) <= 3 && getDateDiffDays(it.expiry) >= 0);
+      const expired = state.items.filter(it => getDateDiffDays(it.expiry) < 0);
+      const area = document.getElementById('alertArea');
+      if (expired.length || soon.length) {
+        let text = '';
+        if (expired.length) text += `${expired.length} ürün süresi geçti. `;
+        if (soon.length) text += `${soon.length} ürün yakın zamanda süresi dolacak.`;
+        area.innerHTML = `<div class="alert">${text}</div>`;
+      } else {
+        area.innerHTML = '';
+      }
+    }
+
+    function renderItems() {
+      const filter = document.getElementById('filterSelect').value;
+      const tbody = document.getElementById('itemsBody');
+      const now = new Date();
+      let list = [...state.items];
+
+      if (filter === 'today') list = list.filter(i => getDateDiffDays(i.expiry) === 0);
+      if (filter === 'week') list = list.filter(i => getDateDiffDays(i.expiry) >= 0 && getDateDiffDays(i.expiry) <= 7);
+      if (filter === 'expired') list = list.filter(i => getDateDiffDays(i.expiry) < 0);
+
+      list.sort((a,b) => new Date(a.expiry) - new Date(b.expiry));
+
+      tbody.innerHTML = list.map((item, idx) => {
+        const left = getDateDiffDays(item.expiry);
+        return `<tr>
+          <td><img src="${getProductImage(item.name)}" alt="${item.name}" style="width:40px; height:40px; border-radius:8px; object-fit:cover; margin-right:8px; vertical-align:middle;"> ${item.name}</td>
+          <td>${item.amount}</td>
+          <td>${item.expiry}</td>
+          <td>${left} gün</td>
+          <td>${statusBadge(left)}</td>
+          <td style="display:flex;gap:6px;"><button class="btn-done" data-index="${idx}">Kullanıldı</button><button class="btn-delete" data-index="${idx}">Sil</button></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-dim);">Kayıtlı ürün yok.</td></tr>';
+
+      Array.from(tbody.querySelectorAll('.btn-delete')).forEach(btn => btn.addEventListener('click', onDelete));
+      Array.from(tbody.querySelectorAll('.btn-done')).forEach(btn => btn.addEventListener('click', onDone));
+
+      renderAlert();
+    }
+
+    function setFocus() { document.getElementById('itemName').focus(); }
+
+    function addItem() {
+      const name = document.getElementById('itemName').value.trim();
+      const amount = document.getElementById('itemAmount').value.trim() || '-';
+      const expiry = document.getElementById('expiryDate').value;
+
+      if (!name || !expiry) {
+        alert('Lütfen ürün adı ve son kullanma tarihi girin.');
+        return;
+      }
+      if (new Date(expiry) == 'Invalid Date') {
+        alert('Geçerli bir tarih seçin.');
+        return;
+      }
+
+      state.items.push({ name, amount, expiry, createdAt: new Date().toISOString() });
+      saveItems();
+      renderItems();
+
+      document.getElementById('itemName').value = '';
+      document.getElementById('itemAmount').value = '';
+      document.getElementById('expiryDate').value = '';
+      setFocus();
+    }
+
+    function onDelete(event) {
+      const index = Number(event.currentTarget.dataset.index);
+      if (Number.isNaN(index)) return;
+      state.items.splice(index, 1);
+      saveItems();
+      renderItems();
+    }
+
+    function onDone(event) {
+      const index = Number(event.currentTarget.dataset.index);
+      if (Number.isNaN(index)) return;
+      state.items.splice(index, 1);
+      saveItems();
+      renderItems();
+    }
+
+    function clearAll() {
+      if (!confirm('Tüm ürünleri silmek istediğinize emin misiniz?')) return;
+      state.items = [];
+      saveItems();
+      renderItems();
+    }
+
+    document.getElementById('addItem').addEventListener('click', addItem);
+    document.getElementById('resetData').addEventListener('click', clearAll);
+    document.getElementById('filterSelect').addEventListener('change', renderItems);
+    document.getElementById('quickRecipeBtn').addEventListener('click', () => switchTab('recipes'));
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById('itemName').addEventListener('keypress', ev => { if (ev.key === 'Enter') addItem(); });
+    document.getElementById('expiryDate').addEventListener('keypress', ev => { if (ev.key === 'Enter') addItem(); });
+
+    window.addEventListener('load', () => {
+      state.items = parseStoredItems();
+      if (state.items.length === 0) {
+        state.items = SAMPLE_ITEMS;
+        saveItems();
+      }
+      switchTab('dashboard'); // Başlangıçta dashboard
+      setFocus();
+    });
+
+    // 1 dakika arayla tekrar render -- notification güncellemesi için
+    setInterval(() => {
+      if (document.getElementById('dashboard').classList.contains('active')) {
+        renderStats();
+        renderAlert();
+      }
+      if (document.getElementById('inventory').classList.contains('active')) {
+        renderItems();
+      }
+      if (document.getElementById('recipes').classList.contains('active')) {
+        renderRecipes();
+      }
+    }, 60000);
+  </script>
+</body>
+</html>
